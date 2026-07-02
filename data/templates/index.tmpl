@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>/tmp/store - Temporary File Storage</title>
+    {{if .uacode}}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ .uacode }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '{{ .uacode }}');
+    </script>
+    {{end}}
+    <meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap' rel='stylesheet'/>
+    <link href="/css/style.css?v={{ .nonce }}" media="all" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+{{if .uacode}}
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ .uacode }}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+{{end}}
+<div id="container">
+    <header>
+        <h1><a href="/">/tmp/store</a></h1>
+        <h2>Temporary File Storage</h2>
+    </header>
+    <section>
+        <form id="upload-form" action="{{ .protocol }}://{{ .domain }}" method="post" enctype="multipart/form-data"
+              style="text-align: center">
+            <p>All files are deleted after
+                <select name="expire">
+                    <option value="300" selected>
+                        5 minutes
+                    </option>
+                    <option value="1800">
+                        30 minutes
+                    </option>
+                    <option value="3600">
+                       1 hour
+                    </option>
+                    <option value="14400">
+                        4 hours
+                    </option>
+                </select>
+            </p>
+            <div id="upload-button">
+                <label for="file" class="file-label">Upload Files <span class="file-max">(max {{ .maxuploadsize }} MB)</span></label>
+                <input type="file" id="file" name="file" multiple required>
+            </div>
+            <noscript>
+                <div><input type="submit" value="Upload" name="upload"></div>
+            </noscript>
+        </form>
+
+        <button type="button" id="copy-all" class="copy-all" data-label="Copy all links below" style="display: none;">
+            Copy all links below
+        </button>
+
+        <ul id="upload-results" class="upload-results"></ul>
+
+        <script>
+            (function () {
+                var MAX_BYTES = {{ .maxuploadsize }} * 1024 * 1024;
+                var MAX_SIZE_LABEL = '{{ .maxuploadsize }} MB';
+                var API_URL = '{{ .protocol }}://{{ .domain }}/api/v1/upload';
+
+                var fileInput = document.getElementById('file');
+                var form = document.getElementById('upload-form');
+                var results = document.getElementById('upload-results');
+                var copyAllButton = document.getElementById('copy-all');
+                var expireSelect = form.querySelector('select[name="expire"]');
+                var activeUploads = 0;
+                var uploadQueue = [];
+                var MAX_CONCURRENT = 3;
+
+                function rememberExpire(value) {
+                    if (!value) return;
+                    var oneYear = 60 * 60 * 24 * 365;
+                    document.cookie = 'expire=' + encodeURIComponent(value) + ';path=/;max-age=' + oneYear + ';SameSite=Lax';
+                }
+
+                function fallbackCopyText(textToCopy) {
+                    var area = document.createElement('textarea');
+                    area.value = textToCopy;
+                    area.setAttribute('readonly', 'readonly');
+                    area.style.position = 'fixed';
+                    area.style.top = '-1000px';
+                    area.style.opacity = '0';
+                    document.body.appendChild(area);
+                    area.select();
+                    try { document.execCommand('copy'); } catch (e) {}
+                    document.body.removeChild(area);
+                }
+
+                function copyText(textToCopy, button) {
+                    if (!textToCopy) return;
+                    var original = button.getAttribute('data-label');
+                    var flash = function () {
+                        button.textContent = 'Copied!';
+                        setTimeout(function () { button.textContent = original; }, 1500);
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(textToCopy).then(flash, function () { fallbackCopyText(textToCopy); flash(); });
+                    } else {
+                        fallbackCopyText(textToCopy);
+                        flash();
+                    }
+                }
+
+                function collectAllUrls() {
+                    var inputs = results.querySelectorAll('.upload-result-url');
+                    var urls = [];
+                    for (var i = 0; i < inputs.length; i++) {
+                        if (inputs[i].value) {
+                            urls.push(inputs[i].value);
+                        }
+                    }
+                    return urls;
+                }
+
+                function updateCopyAllVisibility() {
+                    var ready = activeUploads === 0 && collectAllUrls().length > 1;
+                    copyAllButton.style.display = ready ? '' : 'none';
+                }
+
+                copyAllButton.addEventListener('click', function () {
+                    copyText(collectAllUrls().join('\n'), copyAllButton);
+                });
+
+                if (expireSelect) {
+                    expireSelect.addEventListener('change', function () {
+                        rememberExpire(expireSelect.value);
+                    });
+                }
+
+                function createRow(name) {
+                    var item = document.createElement('li');
+                    item.className = 'upload-result';
+
+                    var label = document.createElement('span');
+                    label.className = 'upload-result-name';
+                    label.textContent = name;
+
+                    var body = document.createElement('div');
+                    body.className = 'upload-result-body';
+
+                    item.appendChild(label);
+                    item.appendChild(body);
+                    results.appendChild(item);
+
+                    return body;
+                }
+
+                function renderProgress(body) {
+                    body.innerHTML = '';
+
+                    var track = document.createElement('div');
+                    track.className = 'progress-bar-track';
+
+                    var fill = document.createElement('div');
+                    fill.className = 'progress-bar-fill';
+                    track.appendChild(fill);
+
+                    var text = document.createElement('p');
+                    text.className = 'progress-text';
+                    text.textContent = '0%';
+
+                    body.appendChild(track);
+                    body.appendChild(text);
+
+                    return { fill: fill, text: text };
+                }
+
+                function renderError(body, message) {
+                    var progress = renderProgress(body);
+                    progress.fill.classList.add('progress-bar-error');
+                    progress.fill.style.width = '100%';
+                    progress.text.classList.add('progress-error');
+                    progress.text.textContent = message;
+                }
+
+                function renderResult(body, url) {
+                    body.innerHTML = '';
+
+                    var row = document.createElement('div');
+                    row.className = 'upload-result-row';
+
+                    var input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'upload-result-url';
+                    input.readOnly = true;
+                    input.value = url;
+                    input.addEventListener('focus', function () { this.select(); });
+
+                    var button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'upload-result-copy';
+                    button.textContent = 'Copy';
+                    button.setAttribute('data-label', 'Copy');
+                    button.addEventListener('click', function () { copyText(input.value, button); });
+
+                    row.appendChild(input);
+                    row.appendChild(button);
+                    body.appendChild(row);
+                }
+
+                function extractError(xhr) {
+                    var fallback = 'Upload failed.';
+                    try {
+                        var json = JSON.parse(xhr.responseText);
+                        if (json.errors) {
+                            var msgs = [];
+                            for (var field in json.errors) {
+                                msgs = msgs.concat(json.errors[field]);
+                            }
+                            if (msgs.length) return msgs.join(' ');
+                        }
+                        if (json.message) return json.message;
+                    } catch (e) {}
+                    return fallback;
+                }
+
+                function startUpload(file, body, expireValue) {
+                    var progress = renderProgress(body);
+
+                    var data = new FormData();
+                    data.append('file', file);
+                    if (expireValue) {
+                        data.append('expire', expireValue);
+                    }
+
+                    var lastLoaded = 0;
+                    var lastTime = Date.now();
+                    var currentSpeed = '0 Kbit/s';
+
+                    var xhr = new XMLHttpRequest();
+
+                    xhr.upload.addEventListener('progress', function (e) {
+                        if (!e.lengthComputable) return;
+                        var pct = Math.round((e.loaded / e.total) * 100);
+                        progress.fill.style.width = pct + '%';
+
+                        var now = Date.now();
+                        var elapsed = (now - lastTime) / 1000;
+                        if (elapsed >= 0.3) {
+                            var bits = ((e.loaded - lastLoaded) / elapsed) * 8;
+                            lastLoaded = e.loaded;
+                            lastTime = now;
+                            if (bits >= 1000000000) {
+                                currentSpeed = (bits / 1000000000).toFixed(1) + ' Gbit/s';
+                            } else if (bits >= 1000000) {
+                                currentSpeed = (bits / 1000000).toFixed(1) + ' Mbit/s';
+                            } else if (bits >= 1000) {
+                                currentSpeed = (bits / 1000).toFixed(0) + ' Kbit/s';
+                            } else {
+                                currentSpeed = bits.toFixed(0) + ' bit/s';
+                            }
+                        }
+                        progress.text.textContent = pct + '% (' + currentSpeed + ')';
+                    });
+
+                    xhr.addEventListener('load', function () {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            var url = null;
+                            try {
+                                var json = JSON.parse(xhr.responseText);
+                                url = json.data && json.data.url ? json.data.url : json.url;
+                            } catch (e) {}
+
+                            if (!url) {
+                                renderError(body, 'Upload failed.');
+                                return;
+                            }
+
+                            rememberExpire(expireValue);
+                            renderResult(body, url);
+                            return;
+                        }
+
+                        renderError(body, extractError(xhr));
+                    });
+
+                    xhr.addEventListener('error', function () {
+                        renderError(body, 'Upload failed.');
+                    });
+
+                    xhr.addEventListener('loadend', function () {
+                        activeUploads--;
+                        updateCopyAllVisibility();
+                        pump();
+                    });
+
+                    activeUploads++;
+                    updateCopyAllVisibility();
+
+                    xhr.open('POST', API_URL);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.send(data);
+                }
+
+                function pump() {
+                    while (activeUploads < MAX_CONCURRENT && uploadQueue.length > 0) {
+                        var job = uploadQueue.shift();
+                        startUpload(job.file, job.body, job.expireValue);
+                    }
+                }
+
+                fileInput.addEventListener('change', function () {
+                    var files = this.files;
+                    if (!files || !files.length) return;
+
+                    var expireValue = expireSelect ? expireSelect.value : null;
+
+                    for (var i = 0; i < files.length; i++) {
+                        var file = files[i];
+                        var body = createRow(file.name);
+
+                        if (file.size > MAX_BYTES) {
+                            renderError(body, 'File too large. Max size is ' + MAX_SIZE_LABEL + '.');
+                            continue;
+                        }
+
+                        var waiting = renderProgress(body);
+                        waiting.text.textContent = 'Waiting…';
+
+                        uploadQueue.push({ file: file, body: body, expireValue: expireValue });
+                    }
+
+                    this.value = '';
+                    pump();
+                    updateCopyAllVisibility();
+                });
+            })();
+        </script>
+
+    </section>
+    <footer>
+        <ul>
+            <li><a href="/">Upload</a></li>
+            <li><a href="/api">API</a></li>
+            <li><a href="/about">About</a></li>
+        </ul>
+    </footer>
+</div>
+</body>
+</html>

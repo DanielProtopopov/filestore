@@ -1,0 +1,164 @@
+[ArchiveSecretsError]
+description = "Error"
+hash = "sha1-b9357a6bfbddec872d946f857f497b5329e0162e"
+other = "Error archiving secrets"
+
+[BodyParamInvalidError]
+description = "Error"
+hash = "sha1-1b2cd4dfc0a264f1349c4f76d89b572458a623bb"
+other = "Incorrect parameter {{.Name}} value from request body, it can be one of {{.Values}}"
+
+[BodyParamMissingError]
+description = "Error"
+hash = "sha1-25e1899eb75cdf4e31000219c3da387197a3363a"
+other = "Missing required parameter {{.Name}} from request body"
+
+[CompileSecretValueRegexError]
+description = "Error"
+hash = "sha1-bf31a83b8435250998ada75315be027f2e475646"
+other = "Error compiling regular expression for secret name validation"
+
+[CopySecretsFoldersError]
+description = "Error"
+hash = "sha1-022b04fec5e78d04b7779d69f46df01b0ee1f1e5"
+other = "Error copying secrets/folders to folder with UID of {{.UID}}"
+
+[CreateSecretsServiceError]
+description = "Error"
+hash = "sha1-e8b233f24636be924e64e0697bc768cbcc51b72c"
+other = "Error creating secrets service"
+
+[DeleteFolderError]
+description = "Error"
+hash = "sha1-4e615b7fe344dd29065cf36cb945a5b2032a07fd"
+other = "Error deleting folder with UID of {{.UID}}"
+
+[DeleteSecretError]
+description = "Error"
+hash = "sha1-c6ac8c5c49efd84a4677b91b73e1af19373def08"
+other = "Error deleting secret with UID of {{.UID}}"
+
+[DynamicSecretError]
+description = "Error"
+hash = "sha1-b76f0e74ead24da5e35b052fc71ee0caf77c25ac"
+other = "Error evaluating dynamic secret"
+
+[ExportSecretsError]
+description = "Error"
+hash = "sha1-e89acb1c5d2ef04d5cc23f969a7df43aa56c3166"
+other = "Error exporting secrets"
+
+[FolderNotFoundError]
+description = "Error"
+hash = "sha1-4a332bbcfee88c0afb0d141af6fb393d4cc786fa"
+other = "Error finding folder with UID of {{.UID}}"
+
+[GetFolderByUIDError]
+description = "Error"
+hash = "sha1-3ecb04a240f88fd514cf2f13e093a272298d580f"
+other = "Error retrieving folder with UID of {{.UID}}"
+
+[GetFoldersError]
+description = "Error"
+hash = "sha1-8f7128f284d525bca8d2f29a2b090974a68230b9"
+other = "Error retrieving folders"
+
+[GetSecretByUIDError]
+description = "Error"
+hash = "sha1-6a090097ced11bd3d009a947a43fc513101eadc4"
+other = "Error retrieving secret with UID of {{.UID}}"
+
+[GetSecretFolderError]
+description = "Error"
+hash = "sha1-c3e445fa29ec817da0c666dd120d774fb3ab64a2"
+other = "Error retrieving folder of copied secret with UID of {{.UID}}"
+
+[GetSecretsError]
+description = "Error"
+hash = "sha1-c9d017d51cac7fdd021edba7acae0303db6b2af4"
+other = "Error retrieving secrets"
+
+[InvalidSecretNameError]
+description = "Error"
+hash = "sha1-68bc4fa9319f6aee62f074c65b58248f36f3d6b8"
+other = "Invalid name of secret"
+
+[OnlySecretOrValueError]
+description = "Error"
+hash = "sha1-4a2fb30b0a683e103c7371b9e287ebedf93ee078"
+other = "Provide only scriptable (Script) or static value (Value)"
+
+[OrderError]
+description = "Error"
+hash = "sha1-9f341a479e71798e78d77f9570dfd38183f0012b"
+other = "Error validating ordering"
+
+[PaginationError]
+description = "Error"
+hash = "sha1-99d6eb98d3f74028975ca39a76f949298dc7ad37"
+other = "Error validating pagination"
+
+[QueryParamInvalidError]
+description = "Error"
+hash = "sha1-b745460f14da7278686772b04dc29d9e273322cc"
+other = "Invalid query parameter {{.Name}} value, it can be one of {{.Values}}"
+
+[QueryParamMissingError]
+description = "Error"
+hash = "sha1-b83885df0b1f852a8ad1942416fe873d24ab955c"
+other = "A required query parameter {{.Name}} is missing"
+
+[RequestBodyMappingError]
+description = "Error"
+hash = "sha1-831cd320054c813c82af59d6fc64c1c05dba4982"
+other = "Error mapping request body"
+
+[RequestQueryMappingError]
+description = "Error"
+hash = "sha1-faacb7db881a2f8593538afbe25048e15e4c7538"
+other = "Error mapping request query"
+
+[RequestURIMappingError]
+description = "Error"
+hash = "sha1-5a255af25249afa57fd34d8c659cb393825fefac"
+other = "Error mapping URI parameters"
+
+[RequestValidationError]
+description = "Error"
+hash = "sha1-26927840c91f5308e475b435ddd81b4b0e1ab6ca"
+other = "Error validating request body"
+
+[SecretAlreadyExistsError]
+description = "Error"
+hash = "sha1-0e69ee1a3ee33bd8075f17c2585a2f589f2365d4"
+other = "Secret with name of \"{{.Name}}\" already exists in folder with UID of {{.FolderUID}}"
+
+[UpdateSecretError]
+description = "Error"
+hash = "sha1-b78f15a222839716614eacc0bfa31a6599854dec"
+other = "Error updating secret with UID of {{.UID}}"
+
+[CloseArchiveFileError]
+description = "Error"
+hash = "sha1-b98252e8607a9473b4410cc29c83e77ddf8c65f2"
+other = "Error closing archive file"
+
+[DeleteArchiveFileError]
+description = "Error"
+hash = "sha1-136083200d529da622e21bea18f41ca017c44cc0"
+other = "Error deleting archive file"
+
+[OpenSecretsArchiveError]
+description = "Error"
+hash = "sha1-51a47657e95282a8e52b8ace343a1b5f53b0a4d1"
+other = "Error opening archive file"
+
+[ReadSecretsArchiveError]
+description = "Error"
+hash = "sha1-cf13dedca7f32829cf038249e6d9d138b494503d"
+other = "Error reading archive file"
+
+[UnmarshalDotEnvError]
+description = "Error"
+hash = "sha1-4bafc1104e578b70cbf6e5e95836ffdc5bf90d0d"
+other = "Error unmarshalling dotenv string"

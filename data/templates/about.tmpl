@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>/tmp/store - About</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ .uacode }}"></script>
+    {{if .uacode}}
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '{{ .uacode }}');
+    </script>
+    {{end}}
+    <meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap' rel='stylesheet'/>
+    <link href="/css/style.css?v={{ .nonce }}" media="all" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+{{if .uacode}}
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ .uacode }}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+{{end}}
+<div id="container">
+    <header>
+        <h1><a href="/">/tmp/store</a></h1>
+        <h2>Temporary File Storage</h2>
+    </header>
+    <section>
+
+        <p style="text-align: center">Contact: info&#x00040;{{ .domain }}</p>
+
+    </section>
+    <footer>
+        <ul>
+            <li><a href="/">Upload</a></li>
+            <li><a href="/api">API</a></li>
+            <li><a href="/about">About</a></li>
+        </ul>
+    </footer>
+</div>
+</body>
+</html>

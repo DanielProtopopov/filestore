@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>/tmp/store - API</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ .uacode }}"></script>
+    {{if .uacode}}
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '{{ .uacode }}');
+    </script>
+    {{end}}
+    <meta http-equiv="content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap' rel='stylesheet'/>
+    <link href="/css/style.css?v={{ .nonce }}" media="all" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+{{if .uacode}}
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ .uacode }}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+{{end}}
+<div id="container">
+    <header>
+        <h1><a href="/">/tmp/store</a></h1>
+        <h2>Temporary File Storage</h2>
+    </header>
+    <section>
+
+        <h2>API Docs</h2>
+
+        <p class="api-label">Endpoint</p>
+        <pre>POST {{ .protocol }}://{{ .domain }}/api/v1/upload</pre>
+
+        <p class="api-label">Parameters</p>
+        <table class="api-params">
+            <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><code>file</code></td>
+                <td>Yes</td>
+                <td>File to upload, max {{ .maxuploadsize }} MB</td>
+            </tr>
+            <tr>
+                <td><code>expire</code></td>
+                <td>No</td>
+                <td>Seconds until deletion (60–14400), default 600</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p class="api-label">Response</p>
+        <pre>{
+ "status": "success",
+ "data": {
+  "url": "{{ .protocol }}://{{ .domain }}/{id}/{name}"
+ }
+}</pre>
+
+        <p class="api-label">Example</p>
+        <pre>curl -F "file=@/path/to/test.jpg" \
+     {{ .protocol }}://{{ .domain }}/api/v1/upload</pre>
+        <p class="api-label">Example with expire</p>
+        <pre>curl -F "file=@/path/to/test.jpg" \
+     -F "expire=21600" \
+     {{ .protocol }}://{{ .domain }}/api/v1/upload</pre>
+
+    </section>
+    <footer>
+        <ul>
+            <li><a href="/">Upload</a></li>
+            <li><a href="/api">API</a></li>
+            <li><a href="/about">About</a></li>
+        </ul>
+    </footer>
+</div>
+</body>
+</html>
