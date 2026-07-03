@@ -26,8 +26,8 @@ func Serve() {
 	route.GET("/about", public.AboutHandler)
 
 	route.POST("/api/v1/upload", public.StoreTemporaryFileHandler)
-
 	route.GET("/:path/:filename", public.GetTemporaryFileHandler)
+
 	errRun := route.Run(fmt.Sprintf("%s:%d", apiconfig.Settings.Server.Host, apiconfig.Settings.Server.Port))
 	log.Panic(errRun)
 }
