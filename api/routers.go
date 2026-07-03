@@ -25,7 +25,6 @@ func Serve() {
 	route.GET("/api", public.APIHandler)
 	route.GET("/about", public.AboutHandler)
 
-	route.GET("/sitemap.xml", public.GetSitemapHandler)
 	route.POST("/api/v1/upload", public.StoreTemporaryFileHandler)
 
 	route.GET("/:path/:filename", public.GetTemporaryFileHandler)
