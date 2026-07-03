@@ -17,6 +17,8 @@ func Serve() {
 
 	route.Static("/fonts/Fira-Sans/", "data/fonts/Fira-Sans/")
 	route.StaticFile("/css/style.css", "data/style.css")
+	route.StaticFile("/sitemap.xml", "data/web/sitemap.xml")
+	route.StaticFile("/robots.txt", "data/web/robots.txt")
 
 	route.Use(middleware.NoCache).Use(LangWithConfig)
 	route.GET("/", public.IndexHandler)
