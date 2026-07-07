@@ -8,6 +8,7 @@ import (
 	"filestore/structs"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -32,6 +33,7 @@ type Config struct {
 	MaximumUploadSize       int64                    // Maximum file upload size (in megabytes)
 	MaximumFilesPerIP       uint                     // Maximum files per IP address
 	GoogleTag               string                   // Google Tag Manager key
+	TrustedProxies          []string                 // Trusted proxies list when sitting behind a reverse proxy
 	Debug                   bool                     // Debugging flag
 }
 
@@ -113,6 +115,11 @@ func Init(ctx context.Context) {
 		})
 	} else {
 		log.Println("Sentry DSN is not set, no logging there will occur")
+	}
+
+	trustedProxies := config.GetEnv("TRUSTED_PROXIES", "")
+	if trustedProxies != "" {
+		Settings.TrustedProxies = strings.Split(trustedProxies, ",")
 	}
 }
 

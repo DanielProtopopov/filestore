@@ -186,7 +186,7 @@ func StoreTemporaryFileHandler(c *gin.Context) {
 	}
 
 	ipAddress := c.ClientIP()
-	ipAddressFolders, errGetFolders := getIPAddressFolders(rqContext, apiconfig.Settings.StoragePath)
+	ipAddressFolders, errGetFolders := getIPAddressFolders(rqContext, apiconfig.Settings.StoragePath, ipAddress)
 	if errGetFolders != nil {
 		c.JSON(http.StatusBadRequest, UploadRS{Status: fmt.Sprintf("Error getting folders for IP address %s: %s", ipAddress, errGetFolders.Error()), Errors: []string{fmt.Sprintf("Error getting folders for IP address %s: %s", ipAddress, errGetFolders.Error())}})
 		return
@@ -205,6 +205,9 @@ func StoreTemporaryFileHandler(c *gin.Context) {
 		return
 	}
 	expirationSeconds := uint(expirationSecondsVal)
+	if expirationSeconds < 1 {
+		expirationSeconds = 60
+	}
 	if expirationSeconds >= apiconfig.Settings.MaximumExpirationPeriod {
 		expirationSeconds = apiconfig.Settings.MaximumExpirationPeriod
 	}
@@ -233,7 +236,7 @@ func StoreTemporaryFileHandler(c *gin.Context) {
 		// Save folder file
 		structs.Redis.Set(rqContext, randomFileFolder, fileHeader.Filename, time.Duration(expirationSeconds)*time.Second)
 		// Store IP address bound to folder with uploaded file for limit by IP address enforcement
-		structs.Redis.Set(rqContext, fmt.Sprintf("%s-folder-ip-address", randomFileFolder), ipAddress, time.Duration(expirationSeconds)*time.Second)
+		structs.Redis.LPush(rqContext, fmt.Sprintf("ip-%s", ipAddress), randomFileFolder)
 		c.JSON(http.StatusOK, UploadRS{
 			Errors: []string{}, Status: "success", Data: struct {
 				Url string `json:"url"`
@@ -279,12 +282,16 @@ func GetTemporaryFileHandler(c *gin.Context) {
 		return
 	}
 
-	_, errDirectoryExists := os.Stat(filepath.Join(apiconfig.Settings.StoragePath, path))
-	if errDirectoryExists == nil {
-		_, errFileExists := os.Stat(filepath.Join(apiconfig.Settings.StoragePath, path, filename))
-		if errFileExists == nil {
-			c.FileAttachment(filepath.Join(apiconfig.Settings.StoragePath, path, filename), filename)
-			return
+	directories, errReadStoragePath := os.ReadDir(apiconfig.Settings.StoragePath)
+	if errReadStoragePath == nil {
+		for _, directory := range directories {
+			if !directory.IsDir() {
+				continue
+			}
+			if directory.Name() == path {
+				c.FileAttachment(filepath.Join(apiconfig.Settings.StoragePath, path, filename), filename)
+				return
+			}
 		}
 	}
 

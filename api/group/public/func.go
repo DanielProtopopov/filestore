@@ -2,57 +2,48 @@ package public
 
 import (
 	"context"
+	"crypto/rand"
 	"filestore/structs"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/big"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
-// Source - https://stackoverflow.com/a/31832326
-// Posted by icza, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-06-02, License - CC BY-SA 4.0
+func getToken(length int) string {
+	token := ""
+	codeAlphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const (
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-)
-
-func RandStringBytesMaskImpr(n int) string {
-	b := make([]byte, n)
-	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
-	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = rand.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
+	for i := 0; i < length; i++ {
+		token += string(codeAlphabet[cryptoRandSecure(int64(len(codeAlphabet)))])
 	}
+	return token
+}
 
-	return string(b)
+func cryptoRandSecure(max int64) int64 {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(max))
+	if err != nil {
+		log.Println(err)
+	}
+	return nBig.Int64()
 }
 
 func generateFolderNames(length uint, count uint) []string {
 	var folderNames []string
 	for index := uint(0); index < count; index++ {
-		folderNames = append(folderNames, RandStringBytesMaskImpr(int(length)))
+		folderNames = append(folderNames, getToken(int(length)))
 	}
 
 	return folderNames
 }
 
-func getIPAddressFolders(ctx context.Context, storagePath string) ([]string, error) {
+func getIPAddressFolders(ctx context.Context, storagePath string, ipAddress string) ([]string, error) {
 	directories, errReadStoragePath := os.ReadDir(storagePath)
 	if errReadStoragePath != nil {
 		return []string{}, errors.Wrapf(errReadStoragePath, "Failed to read directory %s", storagePath)
@@ -64,14 +55,15 @@ func getIPAddressFolders(ctx context.Context, storagePath string) ([]string, err
 			continue
 		}
 
-		folderName, errKeyExists := structs.Redis.Get(ctx, fmt.Sprintf("%s-folder-ip-address", directory)).Result()
+		foldersByIPAddress, errKeyExists := structs.Redis.LRange(ctx, fmt.Sprintf("ip-%s", ipAddress), 0, -1).Result()
 		if errKeyExists != nil && !errors.Is(errKeyExists, redis.Nil) {
 			log.Printf("[ERROR] Failed to check if %s exists: %s", directory.Name(), errKeyExists.Error())
 			continue
 		}
 
-		if folderName != "" {
-			folders = append(folders, folderName)
+		// Directory gets deleted when expired, so matching key to folder means it's not yet expired
+		if slices.Contains(foldersByIPAddress, directory.Name()) {
+			folders = append(folders, directory.Name())
 		}
 	}
 
