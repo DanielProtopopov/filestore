@@ -20,7 +20,7 @@ func Serve() {
 	if len(apiconfig.Settings.TrustedProxies) > 0 {
 		errSetTrustedProxies := route.SetTrustedProxies(apiconfig.Settings.TrustedProxies)
 		if errSetTrustedProxies != nil {
-			log.Panic("Failed to set trusted proxies list: %s", errSetTrustedProxies.Error())
+			log.Panicf("Failed to set trusted proxies list: %s", errSetTrustedProxies.Error())
 		}
 	}
 	// max of 100 requests and then five more requests per second
